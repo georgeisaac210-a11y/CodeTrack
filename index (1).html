@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>StudyPilot — AI Student Planner</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- ============================ SIGN-IN SCREEN ============================ -->
+<div id="authScreen" class="auth-screen">
+  <div class="auth-visual">
+    <div class="auth-visual-inner">
+      <div class="logo-mark">📘</div>
+      <h1>StudyPilot</h1>
+      <p class="tagline">Your AI study planner that knows where you'll struggle — before you do.</p>
+      <ul class="feature-list">
+        <li><span class="feat-icon">🎯</span> Risk-scored courses from grades, trends &amp; deadlines</li>
+        <li><span class="feat-icon">📅</span> A weekly plan built around your real available hours</li>
+        <li><span class="feat-icon">📈</span> Track quiz scores and watch trends as they move</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="auth-form-panel">
+    <div class="auth-card">
+      <h2 id="authTitle">Sign in</h2>
+      <p class="auth-sub" id="authSub">Enter your email and we'll send you a login code.</p>
+
+      <!-- Step 1: email -->
+      <form id="emailForm" class="auth-form">
+        <label for="emailInput">Email address</label>
+        <input type="email" id="emailInput" placeholder="you@university.edu" autocomplete="email" required />
+        <label for="nameInput" class="optional-label">Name <span>(optional)</span></label>
+        <input type="text" id="nameInput" placeholder="Alex Rivera" autocomplete="name" />
+        <button type="submit" class="btn btn-primary btn-block" id="sendCodeBtn">Send login code</button>
+      </form>
+
+      <!-- Step 2: code -->
+      <form id="codeForm" class="auth-form" style="display:none">
+        <label for="codeInput">6-digit code</label>
+        <input type="text" id="codeInput" inputmode="numeric" maxlength="6" placeholder="000000"
+               autocomplete="one-time-code" class="code-input" required />
+        <div id="demoCodeNote" class="demo-code-note" style="display:none"></div>
+        <button type="submit" class="btn btn-primary btn-block">Verify &amp; sign in</button>
+        <button type="button" class="btn btn-ghost btn-block" id="backToEmail">Use a different email</button>
+      </form>
+
+      <div id="authError" class="auth-error" style="display:none"></div>
+      <p class="auth-fineprint">Demo build — no real email is sent. The code is shown on screen.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ============================== MAIN APP ============================== -->
+<div id="appRoot" class="app" style="display:none">
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark">📘</span>
+      <span class="brand-name">StudyPilot</span>
+    </div>
+    <div class="topbar-actions">
+      <label class="hours-input">
+        <span>Weekly study hours</span>
+        <input type="number" id="totalHoursInput" min="1" max="80" value="20" />
+      </label>
+      <button id="seedBtn" class="btn btn-ghost">Load demo data</button>
+      <div class="user-menu">
+        <div class="avatar" id="userAvatar">A</div>
+        <div class="user-meta">
+          <span id="userName" class="user-name">Student</span>
+          <span id="userEmail" class="user-email"></span>
+        </div>
+        <button id="logoutBtn" class="btn btn-ghost btn-small">Sign out</button>
+      </div>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab-btn active" data-tab="dashboard">Dashboard</button>
+    <button class="tab-btn" data-tab="courses">Courses</button>
+    <button class="tab-btn" data-tab="assessments">Deadlines</button>
+    <button class="tab-btn" data-tab="scores">Scores &amp; Hours</button>
+    <button class="tab-btn" data-tab="plan">Weekly Plan</button>
+  </nav>
+
+  <main class="content">
+
+    <!-- DASHBOARD -->
+    <section id="tab-dashboard" class="tab-panel active">
+      <div class="stat-strip" id="statStrip"></div>
+      <div class="panel-grid">
+        <div class="card summary-card">
+          <h2>Weekly Briefing</h2>
+          <pre id="summaryText" class="summary-text">Loading…</pre>
+        </div>
+        <div class="card">
+          <h2>Course Risk Ranking</h2>
+          <div id="riskList" class="risk-list"></div>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Next Up</h2>
+        <div id="upcomingList" class="upcoming-list"></div>
+      </div>
+    </section>
+
+    <!-- COURSES -->
+    <section id="tab-courses" class="tab-panel">
+      <div class="card">
+        <h2 id="courseFormTitle">Add a course</h2>
+        <form id="courseForm" class="grid-form">
+          <input type="hidden" id="courseId" />
+          <label>Course name <input type="text" id="courseName" required placeholder="e.g. Data Structures" /></label>
+          <label>Course code <input type="text" id="courseCode" placeholder="e.g. CS201" /></label>
+          <label>Credit hours <input type="number" id="courseCredits" value="3" min="0.5" step="0.5" /></label>
+          <label>Expected weekly workload (hrs) <input type="number" id="courseWorkload" value="3" min="0" step="0.5" /></label>
+          <label>Current grade (%) <input type="number" id="courseGrade" min="0" max="100" step="0.1" placeholder="optional" /></label>
+          <label>Self-rated difficulty (1-5)
+            <select id="courseDifficulty">
+              <option value="1">1 - Easy</option>
+              <option value="2">2</option>
+              <option value="3" selected>3 - Moderate</option>
+              <option value="4">4</option>
+              <option value="5">5 - Very hard</option>
+            </select>
+          </label>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Save course</button>
+            <button type="button" id="cancelCourseEdit" class="btn btn-ghost" style="display:none">Cancel</button>
+          </div>
+        </form>
+      </div>
+      <div class="card">
+        <h2>Your Courses</h2>
+        <table class="data-table">
+          <thead>
+            <tr><th>Name</th><th>Code</th><th>Credits</th><th>Workload/wk</th><th>Grade</th><th>Difficulty</th><th></th></tr>
+          </thead>
+          <tbody id="coursesTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ASSESSMENTS -->
+    <section id="tab-assessments" class="tab-panel">
+      <div class="card">
+        <h2>Add a deadline</h2>
+        <form id="assessmentForm" class="grid-form">
+          <label>Course <select id="assessmentCourse" required></select></label>
+          <label>Title <input type="text" id="assessmentTitle" required placeholder="e.g. Midterm Exam" /></label>
+          <label>Type
+            <select id="assessmentType">
+              <option value="assignment">Assignment</option>
+              <option value="exam">Exam</option>
+              <option value="quiz">Quiz</option>
+              <option value="project">Project</option>
+            </select>
+          </label>
+          <label>Due date <input type="date" id="assessmentDue" required /></label>
+          <label>Weight (% of final grade) <input type="number" id="assessmentWeight" value="10" min="0" max="100" step="1" /></label>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Save deadline</button>
+          </div>
+        </form>
+      </div>
+      <div class="card">
+        <h2>All Deadlines</h2>
+        <table class="data-table">
+          <thead>
+            <tr><th>Course</th><th>Title</th><th>Type</th><th>Due date</th><th>Weight</th><th></th></tr>
+          </thead>
+          <tbody id="assessmentsTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- SCORES -->
+    <section id="tab-scores" class="tab-panel">
+      <div class="panel-grid">
+        <div class="card">
+          <h2>Log a score</h2>
+          <form id="scoreForm" class="grid-form single-col">
+            <label>Course <select id="scoreCourse" required></select></label>
+            <label>Label <input type="text" id="scoreLabel" required placeholder="e.g. Quiz 3" /></label>
+            <label>Score (%) <input type="number" id="scoreValue" required min="0" max="100" step="0.1" /></label>
+            <label>Date taken <input type="date" id="scoreDate" required /></label>
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary">Save score</button>
+            </div>
+          </form>
+        </div>
+        <div class="card">
+          <h2>Log study hours</h2>
+          <form id="logForm" class="grid-form single-col">
+            <label>Course <select id="logCourse" required></select></label>
+            <label>Hours <input type="number" id="logHours" required min="0" step="0.25" /></label>
+            <label>Date <input type="date" id="logDate" required /></label>
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary">Log hours</button>
+            </div>
+          </form>
+          <div id="logFeedback" class="inline-feedback" style="display:none"></div>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Score History</h2>
+        <table class="data-table">
+          <thead>
+            <tr><th>Course</th><th>Label</th><th>Score</th><th>Date</th><th></th></tr>
+          </thead>
+          <tbody id="scoresTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- WEEKLY PLAN -->
+    <section id="tab-plan" class="tab-panel">
+      <div class="card">
+        <h2>Hour Allocation by Course</h2>
+        <div id="allocationList" class="allocation-list"></div>
+      </div>
+      <div class="card">
+        <h2>Weekly Calendar</h2>
+        <div id="weekGrid" class="week-grid"></div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
